@@ -1,0 +1,18 @@
+[
+  {
+    "label": "frontend",
+    "adapter": "JavaScript",
+    "build": {
+      "command": "npm",
+      "args": ["run", "dev"]
+    }
+  },
+  {
+    "label": "backend",
+    "adapter": "JavaScript",
+    "build": {
+      "command": "npm",
+      "args": ["run", "server"]
+    }
+  }
+]
