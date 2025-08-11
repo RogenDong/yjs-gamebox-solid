@@ -1,22 +1,20 @@
 import { eventHandler } from "vinxi/http";
+import { YCrossws } from "../server/cros";
+
+const yc = new YCrossws();
 
 export default eventHandler({
-  handler(req) {
-    console.log("handler");
-  },
+  handler(req) {},
   websocket: {
     async open(peer) {
-      console.log("open", peer.id, peer.url);
+      yc.onOpen(peer);
     },
-    async message(peer, msg) {
-      const message = msg.text();
-      console.log("msg", peer.id, peer.url, message);
+    async message(peer, message) {
+      yc.onMessage(peer, message);
     },
     async close(peer, details) {
-      console.log("close", peer.id, peer.url);
+      yc.onClose(peer);
     },
-    async error(peer, error) {
-      console.log("error", peer.id, peer.url, error);
-    },
+    async error(peer, error) {},
   },
 });

@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  yjs-gamebox-solid:
+    # 从当前路径构建镜像
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: yefu/yjs-gamebox-solid:latest
+    ports:
+      - '22010:3000'
+    restart: always

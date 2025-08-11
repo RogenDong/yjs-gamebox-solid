@@ -1,11 +1,12 @@
 import { Title } from "@solidjs/meta";
-import { A, type RouteSectionProps, useParams } from "@solidjs/router";
+import { A, useParams, type RouteSectionProps } from "@solidjs/router";
 import { clientOnly } from "@solidjs/start";
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import type { GameRoom } from "~/components/room/types";
+import { createEffect, createSignal, onCleanup, onMount, Show } from "solid-js";
+import { GameType, type GameRoom } from "~/components/room/types";
 import { useYjsRoomMembersContext, useYjsRoomsContext } from "~/providers/yjs-provider/yjs-rooms-provider";
 
 const MineBox = clientOnly(() => import("~/components/gamebox/mine-box/mine-box"));
+const ChineseChessBox = clientOnly(() => import("~/components/gamebox/chinese-chess-box/chinese-chess-box"));
 
 export default function Home(props: RouteSectionProps) {
   const params = useParams<{ roomId: string }>();
@@ -40,7 +41,12 @@ export default function Home(props: RouteSectionProps) {
           </A>
         </div>
 
-        <MineBox roomId={params.roomId} difficulty={1} />
+        <Show when={room()?.game_type === GameType.Mine}>
+          <MineBox roomId={params.roomId} difficulty={1} />
+        </Show>
+        <Show when={room()?.game_type === GameType.ChineseChess}>
+          <ChineseChessBox roomId={params.roomId} />
+        </Show>
       </div>
     </main>
   );

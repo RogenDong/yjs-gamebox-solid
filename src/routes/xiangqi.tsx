@@ -1,8 +1,7 @@
 import { Title } from "@solidjs/meta";
-import { json } from "@solidjs/router";
-import { clientOnly, GET } from "@solidjs/start";
+import { clientOnly } from "@solidjs/start";
 
-const GameBox = clientOnly(() => import("~/components/gamebox/xiangqi/game-box"));
+const GameBox = clientOnly(() => import("~/components/gamebox/chinese-chess-box/chinese-chess-box"));
 
 export default function Xiangqi() {
   return (

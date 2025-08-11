@@ -40,7 +40,7 @@ export function YjsRoomsProvider(props: { children: JSX.Element }) {
   const player = usePlayer();
   const doc = new Y.Doc();
   /** 初始化Yjs */
-  const websocketProvider = new WebsocketProvider(`${location.protocol === "https:" ? "wss" : "ws"}://${location.hostname}:${import.meta.env.YJS_PORT}`, `rooms`, doc);
+  const websocketProvider = new WebsocketProvider(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`, `rooms`, doc);
   const yRooms = doc.getMap<GameRoom>("rooms");
 
   /** 房间成员 - Yjs文档对象 */

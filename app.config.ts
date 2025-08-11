@@ -4,7 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   ssr: false,
   middleware: "./src/middleware.ts",
-  server: {},
+  server: {
+    experimental: {
+      websocket: true,
+    }
+  },
   vite: {
     plugins: [tailwindcss()],
     envPrefix: "YJS",
@@ -14,5 +18,5 @@ export default defineConfig({
   type: "http",
   handler: "./src/ws.ts",
   target: "server",
-  base: "/ws/1",
+  base: "/ws",
 });

@@ -77,6 +77,7 @@ export default function CreateRoomModal(props: CreateRoomModalProps) {
                   data-form-type="other"
                 >
                   <option value={GameType.Mine}>{GameType.Mine}</option>
+                  <option value={GameType.ChineseChess}>{GameType.ChineseChess}</option>
                   {/* <option value={GameType.Go}>围棋</option>
                   <option value={GameType.Gobang}>五子棋</option>
                   <option value={GameType.DouDizhu}>斗地主</option> */}

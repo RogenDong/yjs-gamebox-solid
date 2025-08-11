@@ -1,6 +1,7 @@
 /** 游戏类型 */
 export enum GameType {
   Mine = "扫雷",
+  ChineseChess = "象棋",
   // Chess = "象棋",
   // Go = "围棋",
 }

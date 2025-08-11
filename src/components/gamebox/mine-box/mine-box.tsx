@@ -80,11 +80,7 @@ export function MineBox(props: MineBoxProps) {
   const player = usePlayer();
   const doc = new Y.Doc();
   /** 初始化房间 */
-  const websocketProvider = new WebsocketProvider(
-    `${location.protocol === "https:" ? "wss" : "ws"}://${location.hostname}:${import.meta.env.YJS_PORT}`,
-    `room/${props.roomId}`,
-    doc,
-  );
+  const websocketProvider = new WebsocketProvider(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`, `room/${props.roomId}`, doc);
   const yCells = doc.getArray<Cell>("cells");
   const yMines = doc.getArray<boolean>("mines");
   const yOpens = doc.getArray<number>("opens");
