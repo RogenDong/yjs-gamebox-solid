@@ -1,5 +1,5 @@
 import { eventHandler } from "vinxi/http";
-import { YCrossws } from "../server/cros";
+import { YCrossws } from "../server/crossws";
 
 const yc = new YCrossws();
 
