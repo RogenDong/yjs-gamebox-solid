@@ -1,13 +1,13 @@
 import { createEventListener } from "@solid-primitives/event-listener";
-import { type Accessor, createContext, createMemo, createSignal, For, type Setter, useContext } from "solid-js";
+import { type Accessor, createContext, createMemo, createSignal, For, onCleanup, type Setter, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
+import type { Player } from "~/components/player/types";
 import { Chat } from "../../chat/chat";
 import { MineBoxCell } from "./cell";
 import { GameStatus } from "./game-status";
 import { BombIcon, CursorIcon } from "./icons";
-import type { Player } from "./metadata";
 import { PlayersList, usePlayer } from "./players";
 
 export interface GameRoom {
@@ -138,6 +138,7 @@ export function MineBox(props: MineBoxProps) {
       vector: [vx, vy],
     } as AwarenessCursor);
   });
+
   /** 绑定容器 */
   function refCellsDiv(element: HTMLDivElement) {
     gameBoxDiv = element;
@@ -355,6 +356,10 @@ export function MineBox(props: MineBoxProps) {
     return flags().indexOf(toIndex(cell)) !== -1;
   }
 
+  onCleanup(() => {
+    websocketProvider.destroy();
+  });
+
   return (
     <MineBoxContext.Provider
       value={{
@@ -382,9 +387,9 @@ export function MineBox(props: MineBoxProps) {
         setVictory,
       }}
     >
-      <div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+      <div class="min-h-screen flex items-center justify-center p-4">
         <div class="flex gap-8">
-          <div ref={refCellsDiv} class="relative bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700">
+          <div ref={refCellsDiv} class="relative bg-card p-8 rounded-lg shadow-2xl border border-input">
             <MineBoxHeader />
             <GameStatus mineCount={mineCount} flagCount={flagCount()} isGameOver={isGameOver()} isVictory={isVictory()} onRestart={restart} />
             <div class="relative flex flex-wrap " style={{ width: `${width * 40}px` }}>
@@ -403,7 +408,7 @@ export function MineBox(props: MineBoxProps) {
         </div>
         <Portal>
           <div class="absolute top-0 right-0 bottom-0 left-0 overflow-hidden pointer-events-none">
-            <For each={awarenessStates()}>
+            <For each={awarenessStates().filter((state) => state.player.id !== player().id)}>
               {(state) => {
                 const [x, y] = setCursorByVector(state.cursor?.vector || []);
                 return (

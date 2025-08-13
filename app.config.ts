@@ -7,11 +7,14 @@ export default defineConfig({
   server: {
     experimental: {
       websocket: true,
-    }
+    },
   },
   vite: {
     plugins: [tailwindcss()],
     envPrefix: "YJS",
+    optimizeDeps: {
+      include: ["solid-markdown > micromark", "solid-markdown > unified"],
+    },
   },
 }).addRouter({
   name: "ws",

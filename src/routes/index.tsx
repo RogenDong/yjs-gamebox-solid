@@ -1,5 +1,3 @@
-"use client";
-
 import { Title } from "@solidjs/meta";
 import { createSignal, For } from "solid-js";
 import { PlayerAvatar } from "~/components/player/player-avatar";
@@ -17,7 +15,7 @@ export default function RoomList() {
   };
 
   return (
-    <main class="min-h-screen bg-gray-900 text-white p-6">
+    <main class="min-h-screen p-6">
       <Title>游戏房间列表</Title>
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">游戏房间列表</h1>
@@ -37,7 +35,7 @@ export default function RoomList() {
           {(room) => {
             const { members } = useYjsRoomMembersContext(room.id);
             return (
-              <a href={`/room/${room.id}`} class="block bg-gray-800 rounded-lg p-4 shadow-lg transition-all duration-300 ease-in-out transform hover:shadow-xl hover:bg-gray-750">
+              <a href={`/room/${room.id}`} class="block bg-card rounded-lg p-4 shadow-lg transition-all duration-300 ease-in-out transform hover:shadow-xl hover:bg-gray-750">
                 <div class="flex justify-between items-center mb-3">
                   <h2 class="text-xl font-semibold">{room.name}</h2>
                   <span class="text-sm bg-gray-700 px-2 py-1 rounded">{room.game_type}</span>

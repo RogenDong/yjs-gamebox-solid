@@ -1,5 +1,5 @@
 import { ReactiveMap } from "@solid-primitives/map";
-import { type Accessor, createContext, createEffect, createSignal, type JSX, useContext } from "solid-js";
+import { type Accessor, createContext, createEffect, createSignal, type JSX, onCleanup, useContext } from "solid-js";
 import { v7 } from "uuid";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
@@ -81,6 +81,10 @@ export function YjsRoomsProvider(props: { children: JSX.Element }) {
     });
     yRoomMembers.set(room_id, []);
   };
+
+  onCleanup(() => {
+    websocketProvider.destroy();
+  });
   return <YjsRoomsContext.Provider value={{ doc, websocketProvider, yRooms, yRoomMembers, rooms, roomMembers, createRoom }}>{props.children}</YjsRoomsContext.Provider>;
 }
 

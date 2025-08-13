@@ -21,9 +21,8 @@ interface PlayersListProps {
 
 /** 玩家列表组件 */
 export function PlayersList(props: PlayersListProps) {
-  console.log(props.players);
   return (
-    <div class="bg-gray-800/90 p-4 rounded-lg shadow-xl border border-gray-700 w-64">
+    <div class="bg-card p-4 rounded-lg shadow-xl border border-input w-64">
       <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-blue-500 mb-4 flex items-center gap-2">
         <UserIcon class="w-5 h-5" />
         Players
