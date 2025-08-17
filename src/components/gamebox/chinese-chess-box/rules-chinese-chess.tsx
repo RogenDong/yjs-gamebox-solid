@@ -119,3 +119,65 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
   return reach;
 }
+
+/** 车的可达范围 */
+export function cheReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = origin.position;
+  const reach = [];
+
+  // 水平方向
+  let min = 0;
+  let max = 9;
+  for (let i = op.x - 1; i >= 0; i--) {
+    if (!board[op.y][i]) continue;
+    // 别打友军！
+    if (board[op.y][i].side !== origin.side) {
+      min = i;
+    } else {
+      min = i + 1;
+    }
+    break;
+  }
+  for (let i = op.x + 1; i < 10; i++) {
+    if (!board[op.y][i]) continue;
+    if (board[op.y][i].side !== origin.side) {
+      max = i;
+    } else {
+      max = i - 1;
+    }
+    break;
+  }
+  // 收集坐标
+  for (let i = min; i <= max; i++) {
+    if (i !== op.x) reach.push({ x: i, y: op.y });
+  }
+
+  // 垂直方向
+  min = 0;
+  max = 8;
+  for (let i = op.y - 1; i >= 0; i--) {
+    if (!board[i][op.x]) continue;
+    // 别打友军！
+    if (board[i][op.x].side !== origin.side) {
+      min = i;
+    } else {
+      min = i + 1;
+    }
+    break;
+  }
+  for (let i = op.y + 1; i < 9; i++) {
+    if (!board[i][op.x]) continue;
+    if (board[i][op.x].side !== origin.side) {
+      max = i;
+    } else {
+      max = i - 1;
+    }
+    break;
+  }
+  // 收集坐标
+  for (let i = min; i <= max; i++) {
+    if (i !== op.y) reach.push({ x: op.x, y: i });
+  }
+
+  return reach;
+}
