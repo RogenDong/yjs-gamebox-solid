@@ -77,8 +77,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
   }
   // 收集坐标
   for (let i = min; i <= max; i++) {
-    if (i === op.x) continue;
-    reach.push({ x: i, y: op.y });
+    if (i !== op.x) reach.push({ x: i, y: op.y });
   }
 
   // 垂直方向
@@ -113,8 +112,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
   // 收集坐标
   for (let i = min; i <= max; i++) {
-    if (i === op.x) continue;
-    reach.push({ x: i, y: op.y });
+    if (i !== op.x) reach.push({ x: i, y: op.y });
   }
 
   return reach;
