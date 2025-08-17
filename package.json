@@ -12,6 +12,7 @@
     "format": "biome lint --write --unsafe"
   },
   "dependencies": {
+    "@kobalte/core": "^0.13.11",
     "@solid-primitives/event-listener": "2.4.3",
     "@solid-primitives/i18n": "2.2.1",
     "@solid-primitives/map": "0.7.2",
@@ -24,6 +25,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "crossws": "0.3.5",
+    "cva": "1.0.0-beta.4",
     "lib0": "0.2.114",
     "lucide-solid": "0.536.0",
     "motion": "^12.23.12",

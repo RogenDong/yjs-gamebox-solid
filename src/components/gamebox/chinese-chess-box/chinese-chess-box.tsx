@@ -1,5 +1,8 @@
-import { type Accessor, createContext, createSignal, For, type Setter, useContext } from "solid-js";
-import { ChessPiece } from "./chess-piece";
+import { type Accessor, createContext, createSignal, type Setter, useContext } from "solid-js";
+import { WebsocketProvider } from "y-websocket";
+import * as Y from "yjs";
+import { Button } from "~/components/ui/button";
+import { ChessBoard } from "./chess-board";
 import type { ChessPieceData, PieceType } from "./types";
 // 棋子类型定义
 export type PieceColor = "red" | "black";
@@ -16,7 +19,11 @@ export interface ChessGameState {
   gameStatus: "playing" | "red-win" | "black-win" | "draw";
 }
 
-export interface ChineseChessContextProps {
+export interface IChineseChessContext {
+  yChessPieceMap: Y.Map<ChessPieceData>;
+  /** 棋子数据 */
+  chessPieces: Accessor<ChessPieceData[]>;
+
   gameState: Accessor<ChessGameState>;
   setGameState: Setter<ChessGameState>;
   draggedPiece: Accessor<{ position: Position; piece: ChessPieceData } | null>;
@@ -26,7 +33,7 @@ export interface ChineseChessContextProps {
   canMoveTo: (from: Position, to: Position) => boolean;
 }
 
-export const ChineseChessContext = createContext<ChineseChessContextProps>();
+export const ChineseChessContext = createContext<IChineseChessContext>();
 
 export function useChineseChessContext() {
   const context = useContext(ChineseChessContext);
@@ -85,78 +92,20 @@ function initializeBoard(): (ChessPieceData | null)[][] {
   // 放置黑方棋子
   blackPieces.forEach(([type, y, x], index) => {
     board[y][x] = {
-      type,
       side: "b",
+      type,
     };
   });
 
   // 放置红方棋子
   redPieces.forEach(([type, y, x], index) => {
     board[y][x] = {
-      type,
       side: "r",
+      type,
     };
   });
 
   return board;
-}
-
-// 棋盘组件
-function ChessBoard() {
-  const { gameState, draggedPiece, setDraggedPiece, movePiece, selectPiece } = useChineseChessContext();
-
-  const handleDragStart = (e: DragEvent, position: Position, piece: ChessPieceData) => {
-    setDraggedPiece({ position, piece });
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-    }
-  };
-
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "move";
-    }
-  };
-
-  const handleDrop = (e: DragEvent, position: Position) => {
-    e.preventDefault();
-    const dragged = draggedPiece();
-    if (dragged) {
-      movePiece(dragged.position, position);
-      setDraggedPiece(null);
-    }
-  };
-
-  return (
-    <div class="relative bg-gradient-to-br from-amber-100 to-amber-200 p-6 rounded-xl shadow-2xl border-4 border-amber-800">
-      <div class="grid grid-cols-9 gap-0 border-2 border-amber-900 bg-amber-50">
-        <For each={Array.from({ length: 90 }, (_, i) => ({ x: i % 9, y: Math.floor(i / 9) }))}>
-          {(position) => {
-            const piece = gameState().board[position.y][position.x];
-            const isRiverBoundary = position.y === 4 || position.y === 5;
-
-            return (
-              <div
-                class={`relative w-16 h-16 border border-amber-800/30 flex items-center justify-center cursor-pointer transition-all duration-200 hover:bg-amber-200/50 ${
-                  isRiverBoundary ? "border-b-4 border-b-blue-600" : ""
-                }`}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, position)}
-                onClick={() => selectPiece(position)}
-              >
-                {piece && <ChessPiece piece={piece} position={position} onDragStart={(e) => handleDragStart(e, position, piece)} />}
-
-                {/* 楚河汉界标识 */}
-                {position.y === 4 && position.x === 1 && <div class="absolute -bottom-8 text-blue-700 font-bold text-lg">楚河</div>}
-                {position.y === 5 && position.x === 7 && <div class="absolute -top-2 text-blue-700 font-bold text-lg">汉界</div>}
-              </div>
-            );
-          }}
-        </For>
-      </div>
-    </div>
-  );
 }
 
 // 游戏状态显示组件
@@ -176,7 +125,13 @@ function GameStatus() {
         <div class="flex justify-between items-center">
           <span class="text-gray-300">游戏状态:</span>
           <span class="font-bold text-green-400">
-            {gameState().gameStatus === "playing" ? "进行中" : gameState().gameStatus === "red-win" ? "红方胜利" : gameState().gameStatus === "black-win" ? "黑方胜利" : "平局"}
+            {gameState().gameStatus === "playing"
+              ? "进行中"
+              : gameState().gameStatus === "red-win"
+                ? "红方胜利"
+                : gameState().gameStatus === "black-win"
+                  ? "黑方胜利"
+                  : "平局"}
           </span>
         </div>
       </div>
@@ -184,15 +139,66 @@ function GameStatus() {
   );
 }
 
-export default function ChineseChessBox() {
+export interface ChineseChessBoxProps {
+  roomId: string;
+}
+
+export default function ChineseChessBox(props: ChineseChessBoxProps) {
+  const doc = new Y.Doc();
+  /** 初始化房间 */
+  const websocketProvider = new WebsocketProvider(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`, `room/${props.roomId}`, doc);
+  const yChessPieceMap = doc.getMap<ChessPieceData>("chessPieces");
+
+  const [chessPieces, setChessPieces] = createSignal<ChessPieceData[]>([]);
   const [gameState, setGameState] = createSignal<ChessGameState>({
     board: initializeBoard(),
     currentPlayer: "r",
-    selectedPiece: null,
     gameStatus: "playing",
+    selectedPiece: null,
+  });
+  websocketProvider.on("status", (status) => {
+    console.log("WebSocket status:", status);
   });
 
   const [draggedPiece, setDraggedPiece] = createSignal<{ position: Position; piece: ChessPieceData } | null>(null);
+
+  /** 开始游戏：初始游戏状态 */
+  function startGame() {
+    // 红方棋子 (上方)
+    yChessPieceMap.set("r-车-0-0", { position: { x: 0, y: 0 }, side: "r", type: "车" });
+    yChessPieceMap.set("r-马-0-1", { position: { x: 1, y: 0 }, side: "r", type: "马" });
+    yChessPieceMap.set("r-相-0-2", { position: { x: 2, y: 0 }, side: "r", type: "相" });
+    yChessPieceMap.set("r-士-0-3", { position: { x: 3, y: 0 }, side: "r", type: "士" });
+    yChessPieceMap.set("r-帅-0-4", { position: { x: 4, y: 0 }, side: "r", type: "帅" });
+    yChessPieceMap.set("r-士-0-5", { position: { x: 5, y: 0 }, side: "r", type: "士" });
+    yChessPieceMap.set("r-相-0-6", { position: { x: 6, y: 0 }, side: "r", type: "相" });
+    yChessPieceMap.set("r-马-0-7", { position: { x: 7, y: 0 }, side: "r", type: "马" });
+    yChessPieceMap.set("r-车-0-8", { position: { x: 8, y: 0 }, side: "r", type: "车" });
+    yChessPieceMap.set("r-炮-2-1", { position: { x: 1, y: 2 }, side: "r", type: "炮" });
+    yChessPieceMap.set("r-炮-2-7", { position: { x: 7, y: 2 }, side: "r", type: "炮" });
+    yChessPieceMap.set("r-兵-3-0", { position: { x: 0, y: 3 }, side: "r", type: "兵" });
+    yChessPieceMap.set("r-兵-3-2", { position: { x: 2, y: 3 }, side: "r", type: "兵" });
+    yChessPieceMap.set("r-兵-3-4", { position: { x: 4, y: 3 }, side: "r", type: "兵" });
+    yChessPieceMap.set("r-兵-3-6", { position: { x: 6, y: 3 }, side: "r", type: "兵" });
+    yChessPieceMap.set("r-兵-3-8", { position: { x: 8, y: 3 }, side: "r", type: "兵" });
+    // 黑方棋子 (下方)
+    yChessPieceMap.set("b-车-9-0", { position: { x: 0, y: 9 }, side: "b", type: "车" });
+    yChessPieceMap.set("b-马-9-1", { position: { x: 1, y: 9 }, side: "b", type: "马" });
+    yChessPieceMap.set("b-相-9-2", { position: { x: 2, y: 9 }, side: "b", type: "相" });
+    yChessPieceMap.set("b-士-9-3", { position: { x: 3, y: 9 }, side: "b", type: "士" });
+    yChessPieceMap.set("b-帅-9-4", { position: { x: 4, y: 9 }, side: "b", type: "帅" });
+    yChessPieceMap.set("b-士-9-5", { position: { x: 5, y: 9 }, side: "b", type: "士" });
+    yChessPieceMap.set("b-相-9-6", { position: { x: 6, y: 9 }, side: "b", type: "相" });
+    yChessPieceMap.set("b-马-9-7", { position: { x: 7, y: 9 }, side: "b", type: "马" });
+    yChessPieceMap.set("b-车-9-8", { position: { x: 8, y: 9 }, side: "b", type: "车" });
+    yChessPieceMap.set("b-炮-7-1", { position: { x: 1, y: 7 }, side: "b", type: "炮" });
+    yChessPieceMap.set("b-炮-7-7", { position: { x: 7, y: 7 }, side: "b", type: "炮" });
+    yChessPieceMap.set("b-兵-6-0", { position: { x: 0, y: 6 }, side: "b", type: "兵" });
+    yChessPieceMap.set("b-兵-6-2", { position: { x: 2, y: 6 }, side: "b", type: "兵" });
+    yChessPieceMap.set("b-兵-6-4", { position: { x: 4, y: 6 }, side: "b", type: "兵" });
+    yChessPieceMap.set("b-兵-6-6", { position: { x: 6, y: 6 }, side: "b", type: "兵" });
+    yChessPieceMap.set("b-兵-6-8", { position: { x: 8, y: 6 }, side: "b", type: "兵" });
+  }
 
   const selectPiece = (position: Position) => {
     const piece = gameState().board[position.y][position.x];
@@ -200,7 +206,7 @@ export default function ChineseChessBox() {
 
     setGameState((prev) => ({
       ...prev,
-      selectedPiece: { position, piece },
+      selectedPiece: { piece, position },
     }));
   };
 
@@ -235,20 +241,35 @@ export default function ChineseChessBox() {
     return true;
   };
 
+  function clear() {
+    yChessPieceMap.clear();
+  }
+
+  yChessPieceMap.observe(() => {
+    setChessPieces(Array.from(yChessPieceMap.values()));
+    console.log("Chess pieces updated:", Array.from(yChessPieceMap.values()));
+  });
+
   return (
     <ChineseChessContext.Provider
       value={{
-        gameState,
-        setGameState,
-        draggedPiece,
-        setDraggedPiece,
-        selectPiece,
-        movePiece,
         canMoveTo,
+        chessPieces,
+        draggedPiece,
+        gameState,
+        movePiece,
+        selectPiece,
+        setDraggedPiece,
+        setGameState,
+        yChessPieceMap,
       }}
     >
-      <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+      <div class="min-h-screen from-gray-900 to-gray-800 flex items-center justify-center p-4">
         <div class="flex flex-col lg:flex-row items-center gap-8">
+          <div class="flex flex-col">
+            <Button onClick={startGame}>开始游戏</Button>
+            <Button onClick={clear}>清空</Button>
+          </div>
           <ChessBoard />
           <GameStatus />
         </div>

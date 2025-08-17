@@ -85,7 +85,7 @@ function Cursor(props: CursorProps) {
   createEffect(() => {
     const parentElement = containerRef()?.parentElement;
 
-    if (parentElement && isActive()) parentElement.style.cursor = "none";
+    // if (parentElement && isActive()) parentElement.style.cursor = "none";
 
     onCleanup(() => {
       if (parentElement) parentElement.style.cursor = "default";

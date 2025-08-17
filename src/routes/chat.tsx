@@ -1,4 +1,4 @@
-import { Cursor, CursorFollow, CursorProvider } from "~/components/animate-ui/components/cursor2";
+import { Cursor, CursorFollow, CursorProvider } from "~/components/animate-ui/components/cursor";
 
 export default function ChatPage() {
   return (

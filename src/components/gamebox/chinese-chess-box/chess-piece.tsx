@@ -1,17 +1,44 @@
 import { cn } from "~/libs/cn";
-import type { ChessPieceData, Position } from "./types";
+import type { ChessPieceData } from "./types";
 
-// 棋子组件
-export function ChessPiece(props: { piece: ChessPieceData; position: Position; onDragStart: (e: DragEvent) => void }) {
+export interface ChessPieceProps {
+  piece: ChessPieceData;
+  isDragging?: boolean;
+  dragPosition?: { x: number; y: number };
+  onMouseDown: (e: MouseEvent) => void;
+}
+/**
+ * 棋子组件
+ */
+export function ChessPiece(props: ChessPieceProps) {
+  const GRID_SIZE = 60;
+
+  function getLeft() {
+    const left = 20 + props.piece.position.x * GRID_SIZE - 32;
+    return props.isDragging && props.dragPosition ? props.dragPosition.x : left;
+  }
+
+  function getTop() {
+    const top = 20 + props.piece.position.y * GRID_SIZE - 32;
+    return props.isDragging && props.dragPosition ? props.dragPosition.y : top;
+  }
+
   return (
     <div
-      class={`w-16 h-16 rounded-full shadow-sm border flex items-center justify-center shadow-sm bg-white/95 transition-all duration-200 hover:scale-110`}
-      draggable={true}
-      onDragStart={props.onDragStart}
+      class={cn(
+        "absolute w-16 h-16 rounded-full shadow-sm border flex items-center justify-center bg-white/95 cursor-move select-none",
+        props.isDragging ? "z-50 scale-110 shadow-lg transition-none" : "transition-all duration-200 hover:scale-110",
+      )}
+      onMouseDown={props.onMouseDown}
+      style={{
+        left: `${getLeft()}px`,
+        top: `${getTop()}px`,
+        transform: props.isDragging ? "none" : undefined,
+      }}
     >
       <div class={cn("absolute inset-[3px] rounded-full", props.piece.side === "r" ? "border border-red-300" : "border border-stone-300")} />
-      <span class={cn("font-bold text-[min(5vw,28px)] leading-none", props.piece.side === "r" ? "text-red-600" : "text-stone-900")} aria-hidden>
-        {formatPieceChar(props.piece)}
+      <span aria-hidden class={cn("font-bold text-[min(5vw,28px)] leading-none", props.piece.side === "r" ? "text-red-600" : "text-stone-900")}>
+        {formatPieceChar(props.piece)} {props.isDragging ? "拖动中" : "?"}
       </span>
       <span class="sr-only">
         {props.piece.side === "r" ? "红" : "黑"} {formatPieceChar(props.piece)}
