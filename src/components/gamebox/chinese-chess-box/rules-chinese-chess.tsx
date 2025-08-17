@@ -179,3 +179,56 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
   return reach;
 }
+
+/** 马的可达范围 */
+export function maReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = origin.position;
+  // 阻挡点、落脚点（每个方向各有2点）
+  const targets = [
+    [
+      [op.x, op.y - 1], // 上
+      [op.x - 1, op.y - 2],
+      [op.x + 1, op.y - 2],
+    ],
+    [
+      [op.x, op.y + 1], // 下
+      [op.x - 1, op.y + 2],
+      [op.x + 1, op.y + 2],
+    ],
+    [
+      [op.x - 1, op.y], // 左
+      [op.x + 2, op.y - 1],
+      [op.x + 2, op.y + 1],
+    ],
+    [
+      [op.x + 1, op.y], // 右
+      [op.x + 2, op.y + 1],
+      [op.x + 2, op.y - 1],
+    ],
+  ];
+  const reach = [];
+
+  // 检查每个点
+  for (const [obstacle, a, b] of targets) {
+    const [ox, oy] = obstacle;
+    // 马脚越界
+    if (ox < 0 || ox > 9 || oy < 0 || oy > 8) continue;
+    // 憋马脚
+    if (board[oy][ox]) continue;
+
+    const [ax, ay] = a;
+    const [bx, by] = b;
+    // 不越界
+    if (!(ax < 0 || ax > 9 || ay < 0 || ay > 8)) {
+      const tmp = board[ay][ax];
+      // 空位、敌对
+      if (!tmp || tmp.side !== origin.side) reach.push({ x: ax, y: ay });
+    }
+    if (!(bx < 0 || bx > 9 || by < 0 || by > 8)) {
+      const tmp = board[by][bx];
+      if (!tmp || tmp.side !== origin.side) reach.push({ x: bx, y: by });
+    }
+  }
+
+  return reach;
+}
