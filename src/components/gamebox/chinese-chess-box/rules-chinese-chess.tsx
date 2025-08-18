@@ -48,7 +48,6 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Po
  * @returns 可移动范围
  */
 export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
-  const op = origin.position;
   const reach: Position[] = [];
 
   /**
@@ -92,6 +91,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
     }
   }
 
+  const op = origin.position;
   // 水平方向
   find(
     9,
@@ -113,62 +113,50 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
 /** 车的可达范围 */
 export function cheReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
-  const op = origin.position;
-  const reach = [];
+  const reach: Position[] = [];
 
+  /**
+   * @param size x或y的最大值
+   * @param center x或y的中点
+   * @param piece 函数：如何根据索引获取棋盘上的棋子
+   * @param suited 函数：如何根据索引构造 Position
+   */
+  function find(size: number, center: number, piece: (i: number) => ChessPieceData, suited: (i: number) => Position) {
+    for (let i = center - 1; i >= 0; i--) {
+      const tmp = piece(i);
+      if (!tmp) reach.push(suited(i));
+      // 检查有无攻击对象
+      else if (tmp.side !== origin.side) {
+        reach.push(suited(i));
+        break;
+      }
+    }
+    for (let i = center + 1; i <= size; i++) {
+      const tmp = piece(i);
+      if (!tmp) reach.push(suited(i));
+      else if (tmp.side !== origin.side) {
+        reach.push(suited(i));
+        break;
+      }
+    }
+  }
+
+  const op = origin.position;
   // 水平方向
-  let min = 0;
-  let max = 9;
-  for (let i = op.x - 1; i >= 0; i--) {
-    if (!board[op.y][i]) continue;
-    // 别打友军！
-    if (board[op.y][i].side !== origin.side) {
-      min = i;
-    } else {
-      min = i + 1;
-    }
-    break;
-  }
-  for (let i = op.x + 1; i < 10; i++) {
-    if (!board[op.y][i]) continue;
-    if (board[op.y][i].side !== origin.side) {
-      max = i;
-    } else {
-      max = i - 1;
-    }
-    break;
-  }
-  // 收集坐标
-  for (let i = min; i <= max; i++) {
-    if (i !== op.x) reach.push({ x: i, y: op.y });
-  }
+  find(
+    9,
+    op.x,
+    (i) => board[op.y][i],
+    (i) => ({ x: i, y: op.y }),
+  );
 
   // 垂直方向
-  min = 0;
-  max = 8;
-  for (let i = op.y - 1; i >= 0; i--) {
-    if (!board[i][op.x]) continue;
-    // 别打友军！
-    if (board[i][op.x].side !== origin.side) {
-      min = i;
-    } else {
-      min = i + 1;
-    }
-    break;
-  }
-  for (let i = op.y + 1; i < 9; i++) {
-    if (!board[i][op.x]) continue;
-    if (board[i][op.x].side !== origin.side) {
-      max = i;
-    } else {
-      max = i - 1;
-    }
-    break;
-  }
-  // 收集坐标
-  for (let i = min; i <= max; i++) {
-    if (i !== op.y) reach.push({ x: op.x, y: i });
-  }
+  find(
+    8,
+    op.y,
+    (y) => board[y][op.x],
+    (y) => ({ x: op.x, y }),
+  );
 
   return reach;
 }
