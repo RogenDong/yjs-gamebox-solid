@@ -49,76 +49,64 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Po
  */
 export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
   const op = origin.position;
-  const reach = [];
+  const reach: Position[] = [];
+
+  /**
+   * @param size x或y的最大值
+   * @param center x或y的中点
+   * @param piece 函数：如何根据索引获取棋盘上的棋子
+   * @param suited 函数：如何根据索引构造 Position
+   */
+  function find(size: number, center: number, piece: (i: number) => ChessPieceData, suited: (i: number) => Position) {
+    for (let i = center - 1; i >= 0; i--) {
+      const tmp = piece(i);
+      if (!tmp) {
+        reach.push(suited(i));
+        continue;
+      }
+      // 遇到阻拦，检查炮击空间，至少需要2单位
+      if (i < 2) break;
+      // 检查有无炮击对象
+      for (i--; i >= 0; i--) {
+        const target = piece(i);
+        if (target && target.side !== origin.side) {
+          reach.push(suited(i));
+          break;
+        }
+      }
+    }
+    for (let i = center + 1; i <= size; i++) {
+      const tmp = piece(i);
+      if (!tmp) {
+        reach.push(suited(i));
+        continue;
+      }
+      if (i > size - 2) break;
+      for (i++; i <= size; i++) {
+        const target = piece(i);
+        if (target && target.side !== origin.side) {
+          reach.push(suited(i));
+          break;
+        }
+      }
+    }
+  }
 
   // 水平方向
-  let min = 0;
-  let max = 9;
-  for (let i = op.x - 1; i >= 0; i--) {
-    if (!board[op.y][i]) continue;
-    if (min === 0) {
-      min = i + 1;
-      // 边缘至少有2个棋子才可以判断吃子
-      if (i < 2) break;
-      continue;
-    }
-    // 别打友军！
-    if (board[op.y][i].side !== origin.side) {
-      reach.push({ x: i, y: op.y });
-      break;
-    }
-  }
-  for (let i = op.x + 1; i < 10; i++) {
-    if (!board[op.y][i]) continue;
-    if (max === 9) {
-      max = i - 1;
-      if (i > 7) break;
-      continue;
-    }
-    if (board[op.y][i].side !== origin.side) {
-      reach.push({ x: i, y: op.y });
-      break;
-    }
-  }
-  // 收集坐标
-  for (let i = min; i <= max; i++) {
-    if (i !== op.x) reach.push({ x: i, y: op.y });
-  }
+  find(
+    9,
+    op.x,
+    (x) => board[op.y][x],
+    (x) => ({ x, y: op.y }),
+  );
 
   // 垂直方向
-  min = 0;
-  max = 8;
-  for (let i = op.y - 1; i >= 0; i--) {
-    if (!board[i][op.x]) continue;
-    if (min === 0) {
-      min = i + 1;
-      // 边缘至少有2个棋子才可以判断吃子
-      if (i < 2) break;
-      continue;
-    }
-    // 别打友军！
-    if (board[i][op.x].side !== origin.side) {
-      reach.push({ x: i, y: op.y });
-      break;
-    }
-  }
-  for (let i = op.y + 1; i < 9; i++) {
-    if (!board[i][op.x]) continue;
-    if (max === 8) {
-      max = i - 1;
-      if (i > 6) break;
-      continue;
-    }
-    if (board[i][op.x].side !== origin.side) {
-      reach.push({ x: i, y: op.y });
-      break;
-    }
-  }
-
-  // 收集坐标
-  for (let i = min; i <= max; i++) {
-    if (i !== op.x) reach.push({ x: i, y: op.y });
-  }
+  find(
+    8,
+    op.x,
+    (y) => board[y][op.x],
+    (y) => ({ x: op.x, y }),
+  );
 
   return reach;
 }
