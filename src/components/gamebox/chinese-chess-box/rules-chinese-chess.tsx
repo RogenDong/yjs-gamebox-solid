@@ -249,3 +249,43 @@ export function xiangReach(origin: ChessPieceData, board: ChessPieceData[][]): P
 
   return reach;
 }
+
+/** 士 只能在九宫格4角与中心移动 */
+const SHI_PRESET_AREA = [
+  { x: 3, y: 0 },
+  { x: 5, y: 0 },
+  { x: 3, y: 2 },
+  { x: 5, y: 2 },
+];
+
+/** 士的可达范围 */
+export function shiReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = origin.position;
+  const reach = [];
+
+  // 棋子在九宫格中心
+  if (op.x === 4) {
+    for (const tp of SHI_PRESET_AREA) {
+      const tmp = board[tp.y][tp.x];
+      if (!tmp || tmp.side !== origin.side) {
+        if (op.y <= 2) reach.push(tp);
+        else reach.push({ x: tp.x, y: tp.y + 7 });
+      }
+    }
+    return reach;
+  }
+
+  // 先检查九宫格中心有没有棋子
+  const tmp = board[4][op.y <= 2 ? 1 : 8];
+  if (tmp && tmp.side === origin.side) return [];
+
+  // 检查棋子在九宫格哪个角
+  for (const { x, y } of SHI_PRESET_AREA) {
+    if (op.x === x && (op.y === y || op.y === y + 7)) {
+      if (op.y <= 2) reach.push({ x: 4, y: 1 });
+      else reach.push({ x: 4, y: 7 });
+      break;
+    }
+  }
+  return reach;
+}
