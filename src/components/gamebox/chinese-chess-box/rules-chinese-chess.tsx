@@ -12,30 +12,31 @@ import type { ChessPieceData, Position } from "./types";
  */
 export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
   const op = origin.position;
-  const reach = [];
+  const reach: Position[] = [];
+
+  /** 边界检查、阵营检查 */
+  function test(x: number, y: number) {
+    const tmp = board[y][x];
+    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+  }
+
   // 上下
   if (origin.side === "b") {
+    // 没到边界都可以前进
     if (op.y < 8) {
-      const tmp = board[op.y + 1][op.x];
-      // 没到底端都可以前进 && 有没有友军挡路
-      if (!tmp || tmp.side !== origin.side) reach.push({ x: op.x, y: op.y + 1 });
+      test(op.x, op.y + 1);
       // 过河前只能前进1步
       if (op.y < 5) return reach;
     }
   } else if (op.y > 0) {
-    const tmp = board[op.y + 1][op.x];
-    if (!tmp || tmp.side !== origin.side) reach.push({ x: op.x, y: op.y - 1 });
+    test(op.x, op.y + 1);
     if (op.y > 4) return reach;
   }
+
   // 左右
-  if (op.x > 0) {
-    const left = board[op.y][op.x - 1];
-    if (!left || left.side !== origin.side) reach.push({ x: op.x - 1, y: op.y });
-  }
-  if (op.x < 9) {
-    const right = board[op.y][op.x + 1];
-    if (!right || right.side !== origin.side) reach.push({ x: op.x + 1, y: op.y });
-  }
+  if (op.x > 0) test(op.x - 1, op.y);
+  if (op.x < 9) test(op.x + 1, op.y);
+
   return reach;
 }
 
