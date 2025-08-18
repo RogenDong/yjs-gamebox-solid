@@ -136,7 +136,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
   // 垂直方向
   find(
     9,
-    op.x,
+    op.y,
     (y) => board[y][op.x],
     (y) => ({ x: op.x, y }),
   );
