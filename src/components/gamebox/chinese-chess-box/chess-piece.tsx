@@ -11,22 +11,22 @@ export interface ChessPieceProps {
  * 棋子组件
  */
 export function ChessPiece(props: ChessPieceProps) {
-  const GRID_SIZE = 60;
+  const GRID_SIZE = 64;
 
   function getLeft() {
-    const left = 20 + props.piece.position.x * GRID_SIZE - 32;
+    const left = props.piece.position.x * GRID_SIZE;
     return props.isDragging && props.dragPosition ? props.dragPosition.x : left;
   }
 
   function getTop() {
-    const top = 20 + props.piece.position.y * GRID_SIZE - 32;
+    const top = props.piece.position.y * GRID_SIZE;
     return props.isDragging && props.dragPosition ? props.dragPosition.y : top;
   }
 
   return (
     <div
       class={cn(
-        "absolute w-16 h-16 rounded-full shadow-sm border flex items-center justify-center bg-white/95 cursor-move select-none",
+        "absolute w-16 h-16 rounded-full shadow-sm border flex items-center justify-center bg-white/95 select-none",
         props.isDragging ? "z-50 scale-110 shadow-lg transition-none" : "transition-all duration-200 hover:scale-110",
       )}
       onMouseDown={props.onMouseDown}
@@ -38,7 +38,7 @@ export function ChessPiece(props: ChessPieceProps) {
     >
       <div class={cn("absolute inset-[3px] rounded-full", props.piece.side === "r" ? "border border-red-300" : "border border-stone-300")} />
       <span aria-hidden class={cn("font-bold text-[min(5vw,28px)] leading-none", props.piece.side === "r" ? "text-red-600" : "text-stone-900")}>
-        {formatPieceChar(props.piece)} {props.isDragging ? "拖动中" : "?"}
+        {formatPieceChar(props.piece)}
       </span>
       <span class="sr-only">
         {props.piece.side === "r" ? "红" : "黑"} {formatPieceChar(props.piece)}

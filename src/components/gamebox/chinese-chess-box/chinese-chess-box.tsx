@@ -1,112 +1,13 @@
-import { type Accessor, createContext, createSignal, type Setter, useContext } from "solid-js";
+import { createSignal } from "solid-js";
 import { WebsocketProvider } from "y-websocket";
 import * as Y from "yjs";
 import { Button } from "~/components/ui/button";
+import { toSignalGetSet } from "~/libs/signal-helper";
 import { ChessBoard } from "./chess-board";
-import type { ChessPieceData, PieceType } from "./types";
+import { ChineseChessContext, useChineseChessContext } from "./chinese-chess-context";
+import type { ChessGameState, ChessPieceData, Position } from "./types";
 // 棋子类型定义
 export type PieceColor = "red" | "black";
-
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface ChessGameState {
-  board: (ChessPieceData | null)[][];
-  currentPlayer: "r" | "b";
-  selectedPiece: { position: Position; piece: ChessPieceData } | null;
-  gameStatus: "playing" | "red-win" | "black-win" | "draw";
-}
-
-export interface IChineseChessContext {
-  yChessPieceMap: Y.Map<ChessPieceData>;
-  /** 棋子数据 */
-  chessPieces: Accessor<ChessPieceData[]>;
-
-  gameState: Accessor<ChessGameState>;
-  setGameState: Setter<ChessGameState>;
-  draggedPiece: Accessor<{ position: Position; piece: ChessPieceData } | null>;
-  setDraggedPiece: Setter<{ position: Position; piece: ChessPieceData } | null>;
-  selectPiece: (position: Position) => void;
-  movePiece: (from: Position, to: Position) => void;
-  canMoveTo: (from: Position, to: Position) => boolean;
-}
-
-export const ChineseChessContext = createContext<IChineseChessContext>();
-
-export function useChineseChessContext() {
-  const context = useContext(ChineseChessContext);
-  if (!context) {
-    throw new Error("useChineseChessContext must be used within a ChineseChessContext.Provider");
-  }
-  return context;
-}
-
-// 初始化棋盘
-function initializeBoard(): (ChessPieceData | null)[][] {
-  const board: (ChessPieceData | null)[][] = Array(10)
-    .fill(null)
-    .map(() => Array(9).fill(null));
-
-  // 黑方棋子 (上方)
-  const blackPieces: [PieceType, number, number][] = [
-    ["车", 0, 0],
-    ["马", 0, 1],
-    ["相", 0, 2],
-    ["士", 0, 3],
-    ["帅", 0, 4],
-    ["士", 0, 5],
-    ["相", 0, 6],
-    ["马", 0, 7],
-    ["车", 0, 8],
-    ["炮", 2, 1],
-    ["炮", 2, 7],
-    ["兵", 3, 0],
-    ["兵", 3, 2],
-    ["兵", 3, 4],
-    ["兵", 3, 6],
-    ["兵", 3, 8],
-  ];
-
-  // 红方棋子 (下方)
-  const redPieces: [PieceType, number, number][] = [
-    ["车", 9, 0],
-    ["马", 9, 1],
-    ["相", 9, 2],
-    ["士", 9, 3],
-    ["帅", 9, 4],
-    ["士", 9, 5],
-    ["相", 9, 6],
-    ["马", 9, 7],
-    ["车", 9, 8],
-    ["炮", 7, 1],
-    ["炮", 7, 7],
-    ["兵", 6, 0],
-    ["兵", 6, 2],
-    ["兵", 6, 4],
-    ["兵", 6, 6],
-    ["兵", 6, 8],
-  ];
-
-  // 放置黑方棋子
-  blackPieces.forEach(([type, y, x], index) => {
-    board[y][x] = {
-      side: "b",
-      type,
-    };
-  });
-
-  // 放置红方棋子
-  redPieces.forEach(([type, y, x], index) => {
-    board[y][x] = {
-      side: "r",
-      type,
-    };
-  });
-
-  return board;
-}
 
 // 游戏状态显示组件
 function GameStatus() {
@@ -149,90 +50,72 @@ export default function ChineseChessBox(props: ChineseChessBoxProps) {
   const websocketProvider = new WebsocketProvider(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`, `room/${props.roomId}`, doc);
   const yChessPieceMap = doc.getMap<ChessPieceData>("chessPieces");
 
-  const [chessPieces, setChessPieces] = createSignal<ChessPieceData[]>([]);
+  const chessPieces = toSignalGetSet(createSignal<ChessPieceData[]>([]));
+  const selectionPiece = toSignalGetSet(createSignal<ChessPieceData | null>(null));
   const [gameState, setGameState] = createSignal<ChessGameState>({
-    board: initializeBoard(),
     currentPlayer: "r",
     gameStatus: "playing",
-    selectedPiece: null,
-  });
-  websocketProvider.on("status", (status) => {
-    console.log("WebSocket status:", status);
   });
 
   const [draggedPiece, setDraggedPiece] = createSignal<{ position: Position; piece: ChessPieceData } | null>(null);
 
   /** 开始游戏：初始游戏状态 */
   function startGame() {
-    // 红方棋子 (上方)
-    yChessPieceMap.set("r-车-0-0", { position: { x: 0, y: 0 }, side: "r", type: "车" });
-    yChessPieceMap.set("r-马-0-1", { position: { x: 1, y: 0 }, side: "r", type: "马" });
-    yChessPieceMap.set("r-相-0-2", { position: { x: 2, y: 0 }, side: "r", type: "相" });
-    yChessPieceMap.set("r-士-0-3", { position: { x: 3, y: 0 }, side: "r", type: "士" });
-    yChessPieceMap.set("r-帅-0-4", { position: { x: 4, y: 0 }, side: "r", type: "帅" });
-    yChessPieceMap.set("r-士-0-5", { position: { x: 5, y: 0 }, side: "r", type: "士" });
-    yChessPieceMap.set("r-相-0-6", { position: { x: 6, y: 0 }, side: "r", type: "相" });
-    yChessPieceMap.set("r-马-0-7", { position: { x: 7, y: 0 }, side: "r", type: "马" });
-    yChessPieceMap.set("r-车-0-8", { position: { x: 8, y: 0 }, side: "r", type: "车" });
-    yChessPieceMap.set("r-炮-2-1", { position: { x: 1, y: 2 }, side: "r", type: "炮" });
-    yChessPieceMap.set("r-炮-2-7", { position: { x: 7, y: 2 }, side: "r", type: "炮" });
-    yChessPieceMap.set("r-兵-3-0", { position: { x: 0, y: 3 }, side: "r", type: "兵" });
-    yChessPieceMap.set("r-兵-3-2", { position: { x: 2, y: 3 }, side: "r", type: "兵" });
-    yChessPieceMap.set("r-兵-3-4", { position: { x: 4, y: 3 }, side: "r", type: "兵" });
-    yChessPieceMap.set("r-兵-3-6", { position: { x: 6, y: 3 }, side: "r", type: "兵" });
-    yChessPieceMap.set("r-兵-3-8", { position: { x: 8, y: 3 }, side: "r", type: "兵" });
-    // 黑方棋子 (下方)
-    yChessPieceMap.set("b-车-9-0", { position: { x: 0, y: 9 }, side: "b", type: "车" });
-    yChessPieceMap.set("b-马-9-1", { position: { x: 1, y: 9 }, side: "b", type: "马" });
-    yChessPieceMap.set("b-相-9-2", { position: { x: 2, y: 9 }, side: "b", type: "相" });
-    yChessPieceMap.set("b-士-9-3", { position: { x: 3, y: 9 }, side: "b", type: "士" });
-    yChessPieceMap.set("b-帅-9-4", { position: { x: 4, y: 9 }, side: "b", type: "帅" });
-    yChessPieceMap.set("b-士-9-5", { position: { x: 5, y: 9 }, side: "b", type: "士" });
-    yChessPieceMap.set("b-相-9-6", { position: { x: 6, y: 9 }, side: "b", type: "相" });
-    yChessPieceMap.set("b-马-9-7", { position: { x: 7, y: 9 }, side: "b", type: "马" });
-    yChessPieceMap.set("b-车-9-8", { position: { x: 8, y: 9 }, side: "b", type: "车" });
-    yChessPieceMap.set("b-炮-7-1", { position: { x: 1, y: 7 }, side: "b", type: "炮" });
-    yChessPieceMap.set("b-炮-7-7", { position: { x: 7, y: 7 }, side: "b", type: "炮" });
-    yChessPieceMap.set("b-兵-6-0", { position: { x: 0, y: 6 }, side: "b", type: "兵" });
-    yChessPieceMap.set("b-兵-6-2", { position: { x: 2, y: 6 }, side: "b", type: "兵" });
-    yChessPieceMap.set("b-兵-6-4", { position: { x: 4, y: 6 }, side: "b", type: "兵" });
-    yChessPieceMap.set("b-兵-6-6", { position: { x: 6, y: 6 }, side: "b", type: "兵" });
-    yChessPieceMap.set("b-兵-6-8", { position: { x: 8, y: 6 }, side: "b", type: "兵" });
+    const initedDataa: ChessPieceData[] = [
+      // 红方棋子
+      { id: "r-车-0-0", position: { x: 0, y: 0 }, side: "r", type: "车" },
+      { id: "r-马-0-1", position: { x: 1, y: 0 }, side: "r", type: "马" },
+      { id: "r-相-0-2", position: { x: 2, y: 0 }, side: "r", type: "相" },
+      { id: "r-士-0-3", position: { x: 3, y: 0 }, side: "r", type: "士" },
+      { id: "r-帅-0-4", position: { x: 4, y: 0 }, side: "r", type: "帅" },
+      { id: "r-士-0-5", position: { x: 5, y: 0 }, side: "r", type: "士" },
+      { id: "r-相-0-6", position: { x: 6, y: 0 }, side: "r", type: "相" },
+      { id: "r-马-0-7", position: { x: 7, y: 0 }, side: "r", type: "马" },
+      { id: "r-车-0-8", position: { x: 8, y: 0 }, side: "r", type: "车" },
+      { id: "r-炮-2-1", position: { x: 1, y: 2 }, side: "r", type: "炮" },
+      { id: "r-炮-2-7", position: { x: 7, y: 2 }, side: "r", type: "炮" },
+      { id: "r-兵-3-0", position: { x: 0, y: 3 }, side: "r", type: "兵" },
+      { id: "r-兵-3-2", position: { x: 2, y: 3 }, side: "r", type: "兵" },
+      { id: "r-兵-3-4", position: { x: 4, y: 3 }, side: "r", type: "兵" },
+      { id: "r-兵-3-6", position: { x: 6, y: 3 }, side: "r", type: "兵" },
+      { id: "r-兵-3-8", position: { x: 8, y: 3 }, side: "r", type: "兵" },
+      // 黑方棋子
+      { id: "b-车-9-0", position: { x: 0, y: 9 }, side: "b", type: "车" },
+      { id: "b-马-9-1", position: { x: 1, y: 9 }, side: "b", type: "马" },
+      { id: "b-相-9-2", position: { x: 2, y: 9 }, side: "b", type: "相" },
+      { id: "b-士-9-3", position: { x: 3, y: 9 }, side: "b", type: "士" },
+      { id: "b-帅-9-4", position: { x: 4, y: 9 }, side: "b", type: "帅" },
+      { id: "b-士-9-5", position: { x: 5, y: 9 }, side: "b", type: "士" },
+      { id: "b-相-9-6", position: { x: 6, y: 9 }, side: "b", type: "相" },
+      { id: "b-马-9-7", position: { x: 7, y: 9 }, side: "b", type: "马" },
+      { id: "b-车-9-8", position: { x: 8, y: 9 }, side: "b", type: "车" },
+      { id: "b-炮-7-1", position: { x: 1, y: 7 }, side: "b", type: "炮" },
+      { id: "b-炮-7-7", position: { x: 7, y: 7 }, side: "b", type: "炮" },
+      { id: "b-兵-6-0", position: { x: 0, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-2", position: { x: 2, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-4", position: { x: 4, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-6", position: { x: 6, y: 6 }, side: "b", type: "兵" },
+      { id: "b-兵-6-8", position: { x: 8, y: 6 }, side: "b", type: "兵" },
+    ];
+    yChessPieceMap.clear();
+    initedDataa.forEach((piece) => {
+      yChessPieceMap.set(piece.id, piece);
+    });
   }
-
-  const selectPiece = (position: Position) => {
-    const piece = gameState().board[position.y][position.x];
-    if (!piece) return;
-
-    setGameState((prev) => ({
-      ...prev,
-      selectedPiece: { piece, position },
-    }));
-  };
 
   const movePiece = (from: Position, to: Position) => {
     const currentState = gameState();
-    const piece = currentState.board[from.y][from.x];
+    const piece = chessPieces.get().find((p) => p.position.x === from.x && p.position.y === from.y);
+    if (!piece) return;
 
     if (!piece || piece.side !== currentState.currentPlayer) return;
 
-    const targetPiece = currentState.board[to.y][to.x];
-
-    // 如果目标位置有自己的棋子，取消移动
-    if (targetPiece && targetPiece.side === piece.side) {
-      return;
-    }
-
-    // 创建新的棋盘状态
-    const newBoard = currentState.board.map((row) => [...row]);
-    newBoard[from.y][from.x] = null;
-    newBoard[to.y][to.x] = piece;
+    yChessPieceMap.set(piece.id, { ...piece, position: to });
+    selectionPiece.set(null);
 
     setGameState({
       ...currentState,
-      board: newBoard,
       currentPlayer: currentState.currentPlayer === "r" ? "b" : "r",
-      selectedPiece: null,
     });
   };
 
@@ -246,8 +129,13 @@ export default function ChineseChessBox(props: ChineseChessBoxProps) {
   }
 
   yChessPieceMap.observe(() => {
-    setChessPieces(Array.from(yChessPieceMap.values()));
+    chessPieces.set(Array.from(yChessPieceMap.values()));
     console.log("Chess pieces updated:", Array.from(yChessPieceMap.values()));
+  });
+
+  websocketProvider.on("sync", (isSynced: boolean) => {
+    console.log("WebSocket sync status:", isSynced);
+    console.log(yChessPieceMap.values());
   });
 
   return (
@@ -258,7 +146,7 @@ export default function ChineseChessBox(props: ChineseChessBoxProps) {
         draggedPiece,
         gameState,
         movePiece,
-        selectPiece,
+        selectionPiece,
         setDraggedPiece,
         setGameState,
         yChessPieceMap,

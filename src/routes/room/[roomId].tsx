@@ -47,22 +47,22 @@ export default function Home(props: RouteSectionProps) {
         <div class="mx-auto">
           <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold">游戏中心</h1>
-            <A href="/" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+            <A class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300" href="/">
               房间列表
             </A>
           </div>
           <Show when={room()?.game_type === GameType.Mine}>
-            <MineBox roomId={params.roomId} difficulty={1} />
+            <MineBox difficulty={1} roomId={params.roomId} />
           </Show>
           <Show when={room()?.game_type === GameType.ChineseChess}>
             <ChineseChessBox roomId={params.roomId} />
           </Show>
           <Show when={!room()}>
             <div class="flex flex-col items-center justify-center h-full">
-              <img src={sorry} alt="房间不存在" class="w-64 h-64 mb-6" />
+              <img alt="房间不存在" class="w-64 h-64 mb-6" src={sorry} />
               <h2 class="text-2xl font-bold mb-2">哎呀，房间不存在</h2>
               <p class="text-gray-600 mb-6">您要找的房间可能已被删除或不存在</p>
-              <A href="/" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+              <A class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" href="/">
                 返回首页
               </A>
             </div>
@@ -70,8 +70,11 @@ export default function Home(props: RouteSectionProps) {
         </div>
       </main>
       <Cursor>
-        <svg class="size-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-          <path fill="currentColor" d="M1.8 4.4 7 36.2c.3 1.8 2.6 2.3 3.6.8l3.9-5.7c1.7-2.5 4.5-4.1 7.5-4.3l6.9-.5c1.8-.1 2.5-2.4 1.1-3.5L5 2.5c-1.4-1.1-3.5 0-3.3 1.9Z" />
+        <svg class="size-6 text-blue-500" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M1.8 4.4 7 36.2c.3 1.8 2.6 2.3 3.6.8l3.9-5.7c1.7-2.5 4.5-4.1 7.5-4.3l6.9-.5c1.8-.1 2.5-2.4 1.1-3.5L5 2.5c-1.4-1.1-3.5 0-3.3 1.9Z"
+            fill="currentColor"
+          />
         </svg>
       </Cursor>
       <CursorFollow>
