@@ -28,10 +28,14 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Po
     if (op.y > 4) return reach;
   }
   // 左右
-  const left = board[op.y][op.x - 1];
-  const right = board[op.y][op.x + 1];
-  if (op.x > 0 && (!left || left.side !== origin.side)) reach.push({ x: op.x - 1, y: op.y });
-  if (op.x < 9 && (!right || right.side !== origin.side)) reach.push({ x: op.x + 1, y: op.y });
+  if (op.x > 0) {
+    const left = board[op.y][op.x - 1];
+    if (!left || left.side !== origin.side) reach.push({ x: op.x - 1, y: op.y });
+  }
+  if (op.x < 9) {
+    const right = board[op.y][op.x + 1];
+    if (!right || right.side !== origin.side) reach.push({ x: op.x + 1, y: op.y });
+  }
   return reach;
 }
 
