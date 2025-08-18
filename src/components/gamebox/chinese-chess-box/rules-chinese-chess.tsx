@@ -10,24 +10,29 @@ import type { ChessPieceData, Position } from "./types";
  * @param origin 当前棋子
  * @returns 可移动范围
  */
-export function bingReach(origin: ChessPieceData, _: ChessPieceData[][]): Position[] {
+export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
   const op = origin.position;
-  // 黑
+  const reach = [];
+  // 上下
   if (origin.side === "b") {
-    if (op.y < 5) return [{ x: op.x, y: op.y + 1 }];
-    return [
-      { x: op.x, y: op.y + 1 },
-      { x: op.x + 1, y: op.y },
-      { x: op.x - 1, y: op.y },
-    ];
+    if (op.y < 8) {
+      const tmp = board[op.y + 1][op.x];
+      // 没到底端都可以前进 && 有没有友军挡路
+      if (!tmp || tmp.side !== origin.side) reach.push({ x: op.x, y: op.y + 1 });
+      // 过河前只能前进1步
+      if (op.y < 5) return reach;
+    }
+  } else if (op.y > 0) {
+    const tmp = board[op.y + 1][op.x];
+    if (!tmp || tmp.side !== origin.side) reach.push({ x: op.x, y: op.y - 1 });
+    if (op.y > 4) return reach;
   }
-  // 红
-  if (op.y > 4) return [{ x: op.x, y: op.y - 1 }];
-  return [
-    { x: op.x, y: op.y - 1 },
-    { x: op.x + 1, y: op.y },
-    { x: op.x - 1, y: op.y },
-  ];
+  // 左右
+  const left = board[op.y][op.x - 1];
+  const right = board[op.y][op.x + 1];
+  if (op.x > 0 && (!left || left.side !== origin.side)) reach.push({ x: op.x - 1, y: op.y });
+  if (op.x < 9 && (!right || right.side !== origin.side)) reach.push({ x: op.x + 1, y: op.y });
+  return reach;
 }
 
 /**
