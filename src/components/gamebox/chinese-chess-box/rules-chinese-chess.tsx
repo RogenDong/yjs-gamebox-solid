@@ -9,7 +9,7 @@ import type { ChessPieceData, Position } from "./types";
  */
 export function previewChessMove(chess: ChessPieceData, board: ChessPieceData[][]): Position[] {
   const op = chess.position;
-  if (op.x < 0 || op.x > 9 || op.y < 0 || op.y > 8) return [];
+  if (op.x < 0 || op.x > 8 || op.y < 0 || op.y > 9) return [];
   switch (chess.type) {
     case "兵":
       return bingReach(chess, board);
@@ -51,7 +51,7 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Po
   // 上下
   if (origin.side === "b") {
     // 没到边界都可以前进
-    if (op.y < 8) {
+    if (op.y < 9) {
       test(op.x, op.y + 1);
       // 过河前只能前进1步
       if (op.y < 5) return reach;
@@ -63,7 +63,7 @@ export function bingReach(origin: ChessPieceData, board: ChessPieceData[][]): Po
 
   // 左右
   if (op.x > 0) test(op.x - 1, op.y);
-  if (op.x < 9) test(op.x + 1, op.y);
+  if (op.x < 8) test(op.x + 1, op.y);
 
   return reach;
 }
@@ -127,7 +127,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
   const op = origin.position;
   // 水平方向
   find(
-    9,
+    8,
     op.x,
     (x) => board[op.y][x],
     (x) => ({ x, y: op.y }),
@@ -135,7 +135,7 @@ export function paoReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
   // 垂直方向
   find(
-    8,
+    9,
     op.x,
     (y) => board[y][op.x],
     (y) => ({ x: op.x, y }),
@@ -177,7 +177,7 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
   const op = origin.position;
   // 水平方向
   find(
-    9,
+    8,
     op.x,
     (i) => board[op.y][i],
     (i) => ({ x: i, y: op.y }),
@@ -185,7 +185,7 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
 
   // 垂直方向
   find(
-    8,
+    9,
     op.y,
     (y) => board[y][op.x],
     (y) => ({ x: op.x, y }),
@@ -226,19 +226,19 @@ export function maReach(origin: ChessPieceData, board: ChessPieceData[][]): Posi
   for (const [obstacle, a, b] of targets) {
     const [ox, oy] = obstacle;
     // 马脚越界
-    if (ox < 0 || ox > 9 || oy < 0 || oy > 8) continue;
+    if (ox < 0 || ox > 8 || oy < 0 || oy > 9) continue;
     // 憋马脚
     if (board[oy][ox]) continue;
 
     const [ax, ay] = a;
     const [bx, by] = b;
     // 不越界
-    if (!(ax < 0 || ax > 9 || ay < 0 || ay > 8)) {
+    if (!(ax < 0 || ax > 8 || ay < 0 || ay > 9)) {
       const tmp = board[ay][ax];
       // 空位、敌对
       if (!tmp || tmp.side !== origin.side) reach.push({ x: ax, y: ay });
     }
-    if (!(bx < 0 || bx > 9 || by < 0 || by > 8)) {
+    if (!(bx < 0 || bx > 8 || by < 0 || by > 9)) {
       const tmp = board[by][bx];
       if (!tmp || tmp.side !== origin.side) reach.push({ x: bx, y: by });
     }
@@ -334,12 +334,12 @@ export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[][]): P
   }
 
   // 上下边界
-  if ((op.y < 7 && op.y > 0) || op.y > 7) test(op.x, op.y - 1);
-  if ((op.y > 2 && op.y < 9) || op.y < 2) test(op.x, op.y + 1);
+  if (op.y !== 7 && op.y !== 0) test(op.x, op.y - 1);
+  if (op.y !== 2 && op.y !== 9) test(op.x, op.y + 1);
 
   // 左右边界
   if (op.x > 0) test(op.x - 1, op.y);
-  if (op.x < 9) test(op.x + 1, op.y);
+  if (op.x < 8) test(op.x + 1, op.y);
 
   return reach;
 }
