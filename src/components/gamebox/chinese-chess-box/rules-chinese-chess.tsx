@@ -293,3 +293,24 @@ export function shiReach(origin: ChessPieceData, board: ChessPieceData[][]): Pos
   }
   return reach;
 }
+
+/** 将帅的可达范围 */
+export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = origin.position;
+  const reach: Position[] = [];
+
+  function test(x: number, y: number) {
+    const tmp = board[y][x];
+    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+  }
+
+  // 上下边界
+  if ((op.y < 7 && op.y > 0) || op.y > 7) test(op.x, op.y - 1);
+  if ((op.y > 2 && op.y < 9) || op.y < 2) test(op.x, op.y + 1);
+
+  // 左右边界
+  if (op.x > 0) test(op.x - 1, op.y);
+  if (op.x < 9) test(op.x + 1, op.y);
+
+  return reach;
+}
