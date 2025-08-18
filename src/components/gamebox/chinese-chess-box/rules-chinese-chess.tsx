@@ -1,6 +1,34 @@
 import type { ChessPieceData, Position } from "./types";
 
 /**
+ * 查看棋子可达范围
+ *
+ * @param chess 选中的棋子
+ * @param board 棋盘上的所有棋子
+ * @returns 可移动的位置和可以吃的子
+ */
+export function previewChessMove(chess: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = chess.position;
+  if (op.x < 0 || op.x > 9 || op.y < 0 || op.y > 8) return [];
+  switch (chess.type) {
+    case "兵":
+      return bingReach(chess, board);
+    case "炮":
+      return paoReach(chess, board);
+    case "车":
+      return cheReach(chess, board);
+    case "马":
+      return maReach(chess, board);
+    case "相":
+      return xiangReach(chess, board);
+    case "士":
+      return shiReach(chess, board);
+    case "帅":
+      return shuaiReach(chess, board);
+  }
+}
+
+/**
  * 兵卒的可达范围
  *
  * 兵卒只能走垂直或水平方向；
