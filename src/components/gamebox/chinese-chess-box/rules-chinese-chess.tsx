@@ -232,3 +232,39 @@ export function maReach(origin: ChessPieceData, board: ChessPieceData[][]): Posi
 
   return reach;
 }
+
+/** 象的可达范围 */
+export function xiangReach(origin: ChessPieceData, board: ChessPieceData[][]): Position[] {
+  const op = origin.position;
+  // 阻挡点、落脚点
+  const targets = [
+    [
+      [op.x + 1, op.y - 1],
+      [op.x + 2, op.y - 2],
+    ],
+    [
+      [op.x + 1, op.y + 1],
+      [op.x + 2, op.y + 2],
+    ],
+    [
+      [op.x - 1, op.y + 1],
+      [op.x - 2, op.y + 2],
+    ],
+    [
+      [op.x - 1, op.y - 1],
+      [op.x - 2, op.y - 2],
+    ],
+  ];
+  const reach = [];
+
+  for (const [obstacle, dest] of targets) {
+    const [ox, oy] = obstacle;
+    if (board[oy][ox]) continue;
+
+    const [x, y] = dest;
+    const tmp = board[y][x];
+    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+  }
+
+  return reach;
+}
