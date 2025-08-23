@@ -257,35 +257,33 @@ export function maReach(origin: ChessPieceData, board: ChessPieceData[]): Positi
 
 /** 象的可达范围 */
 export function xiangReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const op = origin.position;
+  const { x, y } = origin.position;
   // 阻挡点、落脚点
   const targets = [
     [
-      [op.x + 1, op.y - 1],
-      [op.x + 2, op.y - 2],
+      [x + 1, y - 1],
+      [x + 2, y - 2],
     ],
     [
-      [op.x + 1, op.y + 1],
-      [op.x + 2, op.y + 2],
+      [x + 1, y + 1],
+      [x + 2, y + 2],
     ],
     [
-      [op.x - 1, op.y + 1],
-      [op.x - 2, op.y + 2],
+      [x - 1, y + 1],
+      [x - 2, y + 2],
     ],
     [
-      [op.x - 1, op.y - 1],
-      [op.x - 2, op.y - 2],
+      [x - 1, y - 1],
+      [x - 2, y - 2],
     ],
   ];
   const reach = [];
 
-  for (const [obstacle, dest] of targets) {
-    const [ox, oy] = obstacle;
-    if (exists(board, ox, oy)) continue;
+  for (const [[ox, oy], [dx, dy]] of targets) {
+    if (ox < 0 || ox > 8 || oy < 0 || oy > 9 || dx < 0 || dx > 8 || dy < 0 || dy > 9 || exists(board, ox, oy)) continue;
 
-    const [x, y] = dest;
-    const tmp = getByPos(board, x, y);
-    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+    const tmp = getByPos(board, dx, dy);
+    if (!tmp || tmp.side !== origin.side) reach.push({ x: dx, y: dy });
   }
 
   return reach;
@@ -304,30 +302,20 @@ export function shiReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
   const op = origin.position;
   const reach = [];
 
-  // 棋子在九宫格中心
+  // 士在九宫格中心
   if (op.x === 4) {
-    for (const tp of SHI_PRESET_AREA) {
-      const tmp = getByPos(board, tp.x, tp.y);
-      if (!tmp || tmp.side !== origin.side) {
-        if (op.y <= 2) reach.push(tp);
-        else reach.push({ x: tp.x, y: tp.y + 7 });
-      }
+    for (let { x, y } of SHI_PRESET_AREA) {
+      if (op.y > 2) y += 7;
+      const tmp = getByPos(board, x, y);
+      if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
     }
     return reach;
   }
 
-  // 先检查九宫格中心有没有棋子
-  const tmp = getByPos(board, 4, op.y < 5 ? 1 : 8);
-  if (tmp && tmp.side === origin.side) return [];
-
-  // 检查棋子在九宫格哪个角
-  for (const { x, y } of SHI_PRESET_AREA) {
-    if (op.x === x && (op.y === y || op.y === y + 7)) {
-      if (op.y <= 2) reach.push({ x: 4, y: 1 });
-      else reach.push({ x: 4, y: 7 });
-      break;
-    }
-  }
+  // 士在九宫格四角，先检查中心有没有棋子
+  const cp = { x: 4, y: op.y > 2 ? 8 : 1 };
+  const tmp = getByPos(board, cp.x, cp.y);
+  if (!tmp || tmp.side !== origin.side) reach.push(cp);
   return reach;
 }
 
