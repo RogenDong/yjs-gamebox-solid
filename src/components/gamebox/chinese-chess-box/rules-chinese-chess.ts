@@ -47,31 +47,31 @@ function getByPos(arr: ChessPieceData[], x: number, y: number): ChessPieceData |
  * @returns 可移动范围
  */
 export function bingReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const op = origin.position;
   const reach: Position[] = [];
 
-  /** 边界检查、阵营检查 */
+  /** 阵营检查 */
   function test(x: number, y: number) {
     const tmp = getByPos(board, x, y);
     if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
   }
 
-  // 上下
-  if (origin.side === "b") {
+  const { x, y } = origin.position;
+  // 红往下；黑往上
+  if (origin.side === "r") {
     // 没到边界都可以前进
-    if (op.y < 9) {
-      test(op.x, op.y + 1);
+    if (y < 9) {
+      test(x, y + 1);
       // 过河前只能前进1步
-      if (op.y < 5) return reach;
+      if (y < 5) return reach;
     }
-  } else if (op.y > 0) {
-    test(op.x, op.y + 1);
-    if (op.y > 4) return reach;
+  } else if (y > 0) {
+    test(x, y - 1);
+    if (y > 4) return reach;
   }
 
   // 左右
-  if (op.x > 0) test(op.x - 1, op.y);
-  if (op.x < 8) test(op.x + 1, op.y);
+  if (x > 0) test(x - 1, y);
+  if (x < 8) test(x + 1, y);
 
   return reach;
 }
@@ -204,42 +204,37 @@ export function cheReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
 
 /** 马的可达范围 */
 export function maReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const op = origin.position;
+  const { x, y } = origin.position;
   // 阻挡点、落脚点（每个方向各有2点）
   const targets = [
     [
-      [op.x, op.y - 1], // 上
-      [op.x - 1, op.y - 2],
-      [op.x + 1, op.y - 2],
+      [x, y - 1], // 上
+      [x - 1, y - 2],
+      [x + 1, y - 2],
     ],
     [
-      [op.x, op.y + 1], // 下
-      [op.x - 1, op.y + 2],
-      [op.x + 1, op.y + 2],
+      [x, y + 1], // 下
+      [x - 1, y + 2],
+      [x + 1, y + 2],
     ],
     [
-      [op.x - 1, op.y], // 左
-      [op.x + 2, op.y - 1],
-      [op.x + 2, op.y + 1],
+      [x - 1, y], // 左
+      [x + 2, y - 1],
+      [x + 2, y + 1],
     ],
     [
-      [op.x + 1, op.y], // 右
-      [op.x + 2, op.y + 1],
-      [op.x + 2, op.y - 1],
+      [x + 1, y], // 右
+      [x + 2, y + 1],
+      [x + 2, y - 1],
     ],
   ];
   const reach = [];
 
   // 检查每个点
-  for (const [obstacle, a, b] of targets) {
-    const [ox, oy] = obstacle;
-    // 马脚越界
-    if (ox < 0 || ox > 8 || oy < 0 || oy > 9) continue;
-    // 憋马脚
-    if (exists(board, ox, oy)) continue;
+  for (const [[ox, oy], [ax, ay], [bx, by]] of targets) {
+    // 马脚越界 or 憋马脚
+    if (ox < 0 || ox > 8 || oy < 0 || oy > 9 || exists(board, ox, oy)) continue;
 
-    const [ax, ay] = a;
-    const [bx, by] = b;
     // 不越界
     if (!(ax < 0 || ax > 8 || ay < 0 || ay > 9)) {
       const tmp = getByPos(board, ax, ay);
@@ -321,21 +316,21 @@ export function shiReach(origin: ChessPieceData, board: ChessPieceData[]): Posit
 
 /** 将帅的可达范围 */
 export function shuaiReach(origin: ChessPieceData, board: ChessPieceData[]): Position[] {
-  const op = origin.position;
+  const { x, y } = origin.position;
   const reach: Position[] = [];
 
-  function test(x: number, y: number) {
-    const tmp = getByPos(board, x, y);
-    if (!tmp || tmp.side !== origin.side) reach.push({ x, y });
+  function test(i: number, j: number) {
+    const tmp = getByPos(board, i, j);
+    if (!tmp || tmp.side !== origin.side) reach.push({ x: i, y: j });
   }
 
   // 上下边界
-  if (op.y !== 7 && op.y !== 0) test(op.x, op.y - 1);
-  if (op.y !== 2 && op.y !== 9) test(op.x, op.y + 1);
+  if (y !== 7 && y !== 0) test(x, y - 1);
+  if (y !== 2 && y !== 9) test(x, y + 1);
 
   // 左右边界
-  if (op.x > 0) test(op.x - 1, op.y);
-  if (op.x < 8) test(op.x + 1, op.y);
+  if (x > 0) test(x - 1, y);
+  if (x < 8) test(x + 1, y);
 
   return reach;
 }
